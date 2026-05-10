@@ -80,7 +80,7 @@ Edit `.env`:
 ```env
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-REDIRECT_URI=http://localhost:8000/callback
+REDIRECT_URI=http://127.0.0.1:8000/callback
 SECRET_KEY=a_random_secret_string_for_sessions
 ```
 
@@ -88,7 +88,7 @@ SECRET_KEY=a_random_secret_string_for_sessions
 
 1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create (or open) an app.
 2. Copy **Client ID** and **Client Secret** into `.env`.
-3. In the app settings, add `http://localhost:8000/callback` to **Redirect URIs** and save.
+3. In the app settings, add `http://127.0.0.1:8000/callback` to **Redirect URIs** and save.
 
 ### 5. Run the application
 
@@ -96,13 +96,13 @@ SECRET_KEY=a_random_secret_string_for_sessions
 uvicorn main:app --reload
 ```
 
-The app is now available at [http://localhost:8000](http://localhost:8000).
+The app is now available at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ---
 
 ## Usage
 
-1. Open the browser at `http://localhost:8000`.
+1. Open the browser at `http://127.0.0.1:8000`.
 2. Click **Accedi con Spotify** and authorize the app.
 3. Browse your top tracks, select those you want to keep, and click **+ Aggiungi a playlist**.
 4. Choose an existing playlist or create a new one.
@@ -132,7 +132,7 @@ spotiplay/
 |-----------------------|----------|----------------------------------|------------------------------------------|
 | `SPOTIFY_CLIENT_ID`   | Yes      | —                                | Spotify app Client ID                    |
 | `SPOTIFY_CLIENT_SECRET` | Yes    | —                                | Spotify app Client Secret                |
-| `REDIRECT_URI`        | No       | `http://localhost:8000/callback` | Must match the Spotify app settings      |
+| `REDIRECT_URI`        | No       | `http://127.0.0.1:8000/callback` | Must match the Spotify app settings      |
 | `SECRET_KEY`          | No       | Random (changes on restart)      | Signs session cookies — set a fixed value in production |
 
 ---
