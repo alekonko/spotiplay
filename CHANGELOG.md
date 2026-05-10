@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v1.1.0] - 2026-05-11
+## [v1.0.2] - 2026-05-11
 
 ### Added
 - Sezione **Libreria**: visualizza tutti i brani salvati con campi estesi (popolarità, anno, durata, esplicito, data aggiunta, ISRC), ordinabile per colonna e filtrabile per titolo/artista
