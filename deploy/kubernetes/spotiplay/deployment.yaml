@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotiplay
+  namespace: spotiplay
+  labels:
+    app: spotiplay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spotiplay
+  template:
+    metadata:
+      labels:
+        app: spotiplay
+    spec:
+      containers:
+        - name: spotiplay
+          image: spotiplay:latest
+          # Never: usa l'immagine caricata con `make minikube-load`, non tenta pull dal registry
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SPOTIFY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spotiplay-secrets
+                  key: SPOTIFY_CLIENT_ID
+            - name: SPOTIFY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: spotiplay-secrets
+                  key: SPOTIFY_CLIENT_SECRET
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: spotiplay-secrets
+                  key: SECRET_KEY
+            - name: REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: spotiplay-secrets
+                  key: REDIRECT_URI

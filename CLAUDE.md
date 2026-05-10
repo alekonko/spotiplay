@@ -46,15 +46,47 @@ Browser  ──►  FastAPI (main.py)  ──►  Spotify Web API
 |--------|------|-------------|
 | GET | `/login` | Redirects to Spotify OAuth |
 | GET | `/callback` | OAuth callback, sets session |
-| GET | `/logout` | Clears session |
+| GET | `/logout` | Clears session + invalida cache utente |
 | GET | `/api/auth-status` | `{ authenticated: bool }` — safe, never redirects |
 | GET | `/api/me` | Current user profile |
-| GET | `/api/top-tracks` | Top tracks (`time_range`, `limit` params) |
-| GET | `/api/playlists` | User's playlists (up to 50) |
+| GET | `/api/top-tracks` | Top tracks (`time_range`, `limit`, `refresh` params) |
+| GET | `/api/playlists` | User's playlists (up to 50, `refresh` param) |
 | POST | `/api/playlists` | Create playlist, optionally with initial tracks |
 | GET | `/api/playlists/{id}/tracks` | All tracks in a playlist (auto-paginated) |
 | POST | `/api/playlists/{id}/tracks` | Add tracks to playlist |
 | DELETE | `/api/playlists/{id}/tracks` | Remove tracks from playlist |
+| GET | `/api/library` | Intera libreria salvata, paginata automaticamente (`refresh` param) |
+| GET | `/api/library/export.csv` | Download CSV della libreria (`refresh` param) |
+| GET | `/api/recently-played` | Ultimi 50 ascolti con timestamp (`refresh` param) |
+
+Tutti gli endpoint con `refresh=true` ignorano la cache e la riscrivono.
+
+## File cache
+
+La cache è su file in `./cache/` (gitignored), keyed per utente via hash del refresh_token.
+
+| Endpoint | TTL |
+|----------|-----|
+| top-tracks | 5 min |
+| playlists | 5 min |
+| library | 10 min |
+| recently-played | 3 min |
+
+La cache viene svuotata al logout. Su operazioni di scrittura playlist si invalida la cache `playlists`.
+
+## Scopes OAuth
+
+```
+user-top-read
+playlist-modify-public
+playlist-modify-private
+playlist-read-private
+playlist-read-collaborative
+user-library-read
+user-read-recently-played   ← aggiunto
+```
+
+**Nota**: se l'utente ha già autorizzato l'app con gli scope precedenti, deve fare logout + login per acquisire `user-read-recently-played`.
 
 ## Frontend state model (`app.js`)
 
@@ -69,16 +101,29 @@ state = {
   artistFilter,        // current filter string
   currentPlaylist,     // playlist object being viewed in detail
   currentPlaylistTracks, // tracks of currentPlaylist
+  // Library tab
+  library,             // full list from /api/library
+  libraryFiltered,     // after filter + sort
+  libraryFilter,       // text filter string
+  librarySort,         // { field, dir: 'asc'|'desc' }
+  libraryLoaded,       // lazy-load flag
+  // Stats tab
+  recentlyPlayed,      // list from /api/recently-played
+  statsLoaded,         // lazy-load flag
+  freqChart,           // Chart.js instance
 }
 ```
 
 ## Development notes
 
-- There is no test suite. Manual testing via the browser is the primary verification method.
+- No test suite. Manual browser testing is the primary verification method.
 - No TypeScript, no bundler — edits to `static/` take effect immediately on page reload.
 - Session cookies are signed with `SECRET_KEY`. If the env var is absent, a random key is generated at startup (sessions break on restart — fine for dev, not for prod).
 - Spotify's `/me/top/tracks` returns at most 50 items per request; the limit is enforced server-side.
 - Playlist track fetching (`/api/playlists/{id}/tracks`) paginates automatically in 50-track pages.
+- Library fetching (`/api/library`) paginates automatically until all saved tracks are retrieved.
+- Recently played: Spotify stores at most 50 events server-side; this is a hard API limit.
+- Chart.js loaded via CDN in `index.html`; no build step required.
 
 ## Dependencies
 
