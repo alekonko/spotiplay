@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpotiPlay</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN VIEW ═══════════════════════ -->
+<div id="login-view" class="hidden">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="56" height="56">
+        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.371-.721.49-1.101.241-3.021-1.858-6.832-2.278-11.322-1.237-.422.1-.851-.16-.954-.582-.1-.422.16-.851.582-.954 4.91-1.121 9.122-.641 12.512 1.43.38.24.49.721.241 1.101zm1.472-3.27c-.301.461-.921.601-1.381.301-3.461-2.131-8.732-2.75-12.823-1.5-.521.16-1.071-.13-1.231-.651-.16-.521.131-1.071.651-1.231 4.672-1.42 10.483-.731 14.484 1.71.461.301.601.921.301 1.381zm.129-3.4c-4.15-2.461-11.003-2.689-14.963-1.488-.641.189-1.31-.171-1.5-.81-.189-.641.171-1.31.81-1.5 4.553-1.38 12.123-1.112 16.9 1.721.58.341.771 1.091.43 1.671-.34.58-1.091.771-1.671.43z"/>
+      </svg>
+    </div>
+    <h1>SpotiPlay</h1>
+    <p>Gestisci le tue playlist Spotify in modo semplice</p>
+    <a href="/login" class="btn btn-primary btn-login">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.371-.721.49-1.101.241-3.021-1.858-6.832-2.278-11.322-1.237-.422.1-.851-.16-.954-.582-.1-.422.16-.851.582-.954 4.91-1.121 9.122-.641 12.512 1.43.38.24.49.721.241 1.101zm1.472-3.27c-.301.461-.921.601-1.381.301-3.461-2.131-8.732-2.75-12.823-1.5-.521.16-1.071-.13-1.231-.651-.16-.521.131-1.071.651-1.231 4.672-1.42 10.483-.731 14.484 1.71.461.301.601.921.301 1.381zm.129-3.4c-4.15-2.461-11.003-2.689-14.963-1.488-.641.189-1.31-.171-1.5-.81-.189-.641.171-1.31.81-1.5 4.553-1.38 12.123-1.112 16.9 1.721.58.341.771 1.091.43 1.671-.34.58-1.091.771-1.671.43z"/>
+      </svg>
+      Accedi con Spotify
+    </a>
+    <div id="login-error" class="login-error hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP VIEW ════════════════════════ -->
+<div id="app-view" class="hidden">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.371-.721.49-1.101.241-3.021-1.858-6.832-2.278-11.322-1.237-.422.1-.851-.16-.954-.582-.1-.422.16-.851.582-.954 4.91-1.121 9.122-.641 12.512 1.43.38.24.49.721.241 1.101zm1.472-3.27c-.301.461-.921.601-1.381.301-3.461-2.131-8.732-2.75-12.823-1.5-.521.16-1.071-.13-1.231-.651-.16-.521.131-1.071.651-1.231 4.672-1.42 10.483-.731 14.484 1.71.461.301.601.921.301 1.381zm.129-3.4c-4.15-2.461-11.003-2.689-14.963-1.488-.641.189-1.31-.171-1.5-.81-.189-.641.171-1.31.81-1.5 4.553-1.38 12.123-1.112 16.9 1.721.58.341.771 1.091.43 1.671-.34.58-1.091.771-1.671.43z"/>
+      </svg>
+      <span>SpotiPlay</span>
+    </div>
+    <div class="header-user">
+      <img id="user-avatar" src="" alt="" class="avatar hidden" />
+      <span id="user-name"></span>
+      <a href="/logout" class="btn btn-ghost btn-sm">Esci</a>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="top-tracks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Brani più ascoltati
+    </button>
+    <button class="tab-btn" data-tab="playlists">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      Le mie Playlist
+    </button>
+  </nav>
+
+  <!-- ─── Tab: Top Tracks ─── -->
+  <section id="tab-top-tracks" class="tab-content active">
+    <div class="controls-bar">
+      <div class="control-group">
+        <label class="control-label">Periodo</label>
+        <div class="btn-group">
+          <button class="btn btn-ghost btn-sm time-btn" data-range="short_term">Ultime 4 sett.</button>
+          <button class="btn btn-ghost btn-sm time-btn active" data-range="medium_term">Ultimi 6 mesi</button>
+          <button class="btn btn-ghost btn-sm time-btn" data-range="long_term">Sempre</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="artist-filter">Filtra per artista</label>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="artist-filter" placeholder="Nome artista…" autocomplete="off" />
+          <button id="clear-filter" class="clear-btn hidden" title="Rimuovi filtro">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selection toolbar -->
+    <div id="selection-bar" class="selection-bar hidden">
+      <div class="selection-info">
+        <span id="selected-count">0</span> brani selezionati
+      </div>
+      <div class="selection-actions">
+        <button id="select-all-btn" class="btn btn-ghost btn-sm">Seleziona tutti</button>
+        <button id="clear-selection-btn" class="btn btn-ghost btn-sm">Deseleziona tutti</button>
+        <button id="add-to-playlist-btn" class="btn btn-primary btn-sm">
+          + Aggiungi a playlist
+        </button>
+      </div>
+    </div>
+
+    <div id="tracks-container">
+      <div class="loader">Caricamento brani…</div>
+    </div>
+  </section>
+
+  <!-- ─── Tab: Playlists ─── -->
+  <section id="tab-playlists" class="tab-content hidden">
+    <div class="playlists-header">
+      <h2>Le mie Playlist</h2>
+      <button id="new-playlist-btn" class="btn btn-primary btn-sm">+ Nuova playlist</button>
+    </div>
+    <div id="playlists-container">
+      <div class="loader">Caricamento playlist…</div>
+    </div>
+    <!-- Playlist detail panel -->
+    <div id="playlist-detail" class="playlist-detail hidden">
+      <div class="playlist-detail-header">
+        <button id="back-btn" class="btn btn-ghost btn-sm">← Torna alle playlist</button>
+        <div class="playlist-detail-info">
+          <img id="detail-cover" src="" alt="" class="detail-cover hidden" />
+          <div>
+            <h2 id="detail-name"></h2>
+            <p id="detail-count" class="text-muted"></p>
+          </div>
+        </div>
+      </div>
+      <div id="detail-tracks-container">
+        <div class="loader">Caricamento brani…</div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /app-view -->
+
+<!-- ═══════════════════════ MODAL ════════════════════════════ -->
+<div id="modal-backdrop" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Aggiungi a playlist</h3>
+      <button id="modal-close" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Step 1: choose action -->
+      <div id="modal-step-choose" class="modal-step">
+        <div class="modal-options">
+          <button class="modal-option" id="opt-existing">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+            </svg>
+            <span>Aggiungi a playlist esistente</span>
+          </button>
+          <button class="modal-option" id="opt-new">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span>Crea nuova playlist</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2a: pick existing playlist -->
+      <div id="modal-step-existing" class="modal-step hidden">
+        <button class="btn btn-ghost btn-sm mb-8" id="back-to-choose-existing">← Indietro</button>
+        <div id="modal-playlist-list" class="modal-playlist-list"></div>
+      </div>
+
+      <!-- Step 2b: create new playlist -->
+      <div id="modal-step-new" class="modal-step hidden">
+        <button class="btn btn-ghost btn-sm mb-8" id="back-to-choose-new">← Indietro</button>
+        <div class="form-group">
+          <label for="new-playlist-name">Nome della playlist *</label>
+          <input type="text" id="new-playlist-name" placeholder="Es. Il mio mix preferito" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label for="new-playlist-desc">Descrizione (opzionale)</label>
+          <input type="text" id="new-playlist-desc" placeholder="Descrizione…" maxlength="300" />
+        </div>
+        <div class="form-group form-check">
+          <input type="checkbox" id="new-playlist-public" />
+          <label for="new-playlist-public">Playlist pubblica</label>
+        </div>
+        <button id="create-playlist-confirm" class="btn btn-primary" style="width:100%">Crea e aggiungi brani</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOAST ════════════════════════════ -->
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
