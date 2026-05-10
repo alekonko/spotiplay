@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 import base64
@@ -99,7 +100,9 @@ async def spotify_post(token: str, path: str, body: dict) -> dict:
             headers={"Authorization": f"Bearer {token}"},
             json=body,
         )
-    resp.raise_for_status()
+    if not resp.is_success:
+        print(f"[spotify_post] {path} → {resp.status_code}: {resp.text}")
+        raise HTTPException(resp.status_code, f"Spotify error: {resp.text}")
     return resp.json()
 
 
@@ -131,7 +134,7 @@ async def login(request: Request):
         "redirect_uri": REDIRECT_URI,
         "state": state,
         "scope": SCOPES,
-        "show_dialog": "false",
+        "show_dialog": "true",
     }
     return RedirectResponse(f"{SPOTIFY_AUTH_URL}?{urlencode(params)}")
 
@@ -187,6 +190,15 @@ async def auth_status(request: Request):
     return {"authenticated": bool(token)}
 
 
+@app.get("/api/debug/token")
+async def debug_token(request: Request):
+    """Restituisce il token corrente dalla sessione. Solo per uso locale/test."""
+    token = request.session.get("access_token")
+    if not token:
+        raise HTTPException(401, "Not authenticated")
+    return {"access_token": token}
+
+
 # ─── API: top tracks ──────────────────────────────────────────────────────────
 
 @app.get("/api/top-tracks")
@@ -223,12 +235,9 @@ async def create_playlist(request: Request):
     if not name:
         raise HTTPException(400, "Playlist name is required")
 
-    me = await spotify_get(token, "/me")
-    user_id = me["id"]
-
     playlist = await spotify_post(
         token,
-        f"/users/{user_id}/playlists",
+        "/me/playlists",
         {
             "name": name,
             "description": body.get("description", "Creata con SpotiPlay"),
@@ -239,6 +248,8 @@ async def create_playlist(request: Request):
     # Add tracks if provided
     uris = body.get("uris", [])
     if uris:
+        print(f"[create_playlist] adding {len(uris)} tracks to {playlist['id']}, sample uri: {uris[0]!r}")
+        await asyncio.sleep(1)
         for i in range(0, len(uris), 100):
             await spotify_post(token, f"/playlists/{playlist['id']}/tracks", {"uris": uris[i:i+100]})
 

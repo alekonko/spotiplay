@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make install-dev)",
+      "Bash(make install)",
+      "Bash(make dev)",
+      "Bash(make run)",
+      "Bash(make clean)",
+      "Bash(make docker-build)",
+      "Bash(make build-n-deploy)",
+      "Bash(make test)",
+      "Bash(make test-integration)",
+      "Bash(make diagnose)",
+      "Bash(make update-unreleased)",
+      "Bash(make release-status)",
+      "Bash(git add *)",
+      "Bash(git commit -m *)",
+      "Bash(curl -s http://localhost:*)",
+      "WebSearch"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command'); if echo \"$cmd\" | grep -qE '(make deploy|kubectl apply)'; then cd /home/alekonko/github/alekonko/spotiplay && source .venv/bin/activate 2>/dev/null; uvicorn main:app --host 127.0.0.1 --port 19999 &>/tmp/hook-predeploy.txt & PID=$!; sleep 2; if ! curl -sf http://127.0.0.1:19999/api/auth-status >/dev/null 2>&1; then kill $PID 2>/dev/null; echo \"{\\\"decision\\\":\\\"block\\\",\\\"reason\\\":\\\"App non risponde su /api/auth-status — deploy bloccato. Controlla l'ambiente con make install.\\\"}\" && exit 0; fi; kill $PID 2>/dev/null; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command'); output=$(echo \"$input\" | jq -r '.tool_response.stdout // \"\"'); if echo \"$cmd\" | grep -q 'git commit'; then if ! echo \"$output\" | grep -q 'CHANGELOG'; then echo \"{\\\"systemMessage\\\":\\\"Ricorda: aggiorna [Unreleased] con /update-changelog_unreleased\\\"}\" ; fi; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
