@@ -6,14 +6,24 @@
 
 const state = {
   user: null,
-  topTracks: [],          // full list from API
-  filteredTracks: [],     // after artist filter
+  topTracks: [],
+  filteredTracks: [],
   playlists: [],
   selectedUris: new Set(),
   timeRange: 'medium_term',
   artistFilter: '',
   currentPlaylist: null,
   currentPlaylistTracks: [],
+  // Library
+  library: [],
+  libraryFiltered: [],
+  libraryFilter: '',
+  librarySort: { field: 'added_at', dir: 'desc' },
+  libraryLoaded: false,
+  // Stats
+  recentlyPlayed: [],
+  statsLoaded: false,
+  freqChart: null,
 };
 
 // ═══════════════════════════════════════════════════
@@ -83,9 +93,19 @@ function getArtistNames(track) {
 function getAlbumImage(track, size = 40) {
   const images = track.album?.images;
   if (!images?.length) return null;
-  // Pick smallest image >= size
   const sorted = [...images].sort((a, b) => a.width - b.width);
   return (sorted.find(i => i.width >= size) || sorted[sorted.length - 1]).url;
+}
+
+function formatDatetime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return iso.slice(0, 10);
 }
 
 // ═══════════════════════════════════════════════════
@@ -135,7 +155,6 @@ function renderTopTracks() {
 
   container.innerHTML = `<div class="tracks-list">${items}</div>`;
 
-  // Attach click handlers
   container.querySelectorAll('.track-row').forEach(row => {
     row.addEventListener('click', e => {
       if (e.target.tagName === 'A') return;
@@ -170,12 +189,12 @@ function updateSelectionBar() {
 //  Load: Top Tracks
 // ═══════════════════════════════════════════════════
 
-async function loadTopTracks() {
+async function loadTopTracks(refresh = false) {
   document.getElementById('tracks-container').innerHTML = '<div class="loader">Caricamento brani…</div>';
   state.selectedUris.clear();
 
   try {
-    const data = await apiGet('/api/top-tracks', { time_range: state.timeRange, limit: 50 });
+    const data = await apiGet('/api/top-tracks', { time_range: state.timeRange, limit: 50, refresh });
     if (!data) return;
     state.topTracks = data.items || [];
     applyArtistFilter();
@@ -221,11 +240,11 @@ function renderPlaylists() {
 //  Load: Playlists
 // ═══════════════════════════════════════════════════
 
-async function loadPlaylists() {
+async function loadPlaylists(refresh = false) {
   document.getElementById('playlists-container').innerHTML = '<div class="loader">Caricamento playlist…</div>';
 
   try {
-    const data = await apiGet('/api/playlists');
+    const data = await apiGet('/api/playlists', refresh ? { refresh: true } : {});
     if (!data) return;
     state.playlists = data.items || [];
     renderPlaylists();
@@ -317,7 +336,6 @@ async function removeTrackFromCurrentPlaylist(playlistId, uri) {
     document.getElementById('detail-count').textContent = `${state.currentPlaylistTracks.length} brani`;
     renderPlaylistDetail(playlistId);
     showToast('Brano rimosso dalla playlist');
-    // Refresh playlists list in background
     loadPlaylists();
   } catch (err) {
     showToast(`Errore: ${err.message}`, 'error');
@@ -332,6 +350,264 @@ function closePlaylistDetail() {
 }
 
 // ═══════════════════════════════════════════════════
+//  Library
+// ═══════════════════════════════════════════════════
+
+const LIBRARY_COLS = [
+  { field: 'name',      label: 'Titolo',      sortable: true },
+  { field: 'artists',   label: 'Artista',     sortable: true },
+  { field: 'album',     label: 'Album',       sortable: true },
+  { field: 'year',      label: 'Anno',        sortable: true },
+  { field: 'duration_ms', label: 'Durata',    sortable: true },
+  { field: 'popularity',  label: 'Pop.',      sortable: true },
+  { field: 'explicit',    label: 'E',         sortable: false },
+  { field: 'added_at',    label: 'Aggiunto',  sortable: true },
+];
+
+function applyLibraryFilter() {
+  const q = state.libraryFilter.toLowerCase().trim();
+  state.libraryFiltered = q
+    ? state.library.filter(t =>
+        t.name.toLowerCase().includes(q) || t.artists.toLowerCase().includes(q)
+      )
+    : [...state.library];
+  sortLibrary();
+}
+
+function sortLibrary() {
+  const { field, dir } = state.librarySort;
+  state.libraryFiltered.sort((a, b) => {
+    let va = a[field] ?? '';
+    let vb = b[field] ?? '';
+    if (field === 'duration_ms' || field === 'popularity') {
+      va = Number(va);
+      vb = Number(vb);
+    } else {
+      va = String(va).toLowerCase();
+      vb = String(vb).toLowerCase();
+    }
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+function renderLibrary() {
+  const container = document.getElementById('library-container');
+  const countEl   = document.getElementById('library-count');
+
+  countEl.textContent = `${state.libraryFiltered.length} brani${state.libraryFilter ? ` (filtrati su ${state.library.length})` : ''}`;
+
+  if (!state.libraryFiltered.length) {
+    container.innerHTML = `<div class="empty-state"><h3>Nessun brano trovato</h3></div>`;
+    return;
+  }
+
+  const { field: sortField, dir: sortDir } = state.librarySort;
+
+  const headerCells = LIBRARY_COLS.map(col => {
+    if (!col.sortable) return `<th class="lib-th">${col.label}</th>`;
+    const active = sortField === col.field;
+    const indicator = active ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+    return `<th class="lib-th sortable${active ? ' sort-active' : ''}" data-field="${col.field}">${col.label}${indicator}</th>`;
+  }).join('');
+
+  const rows = state.libraryFiltered.map(t => {
+    const dur = formatDuration(t.duration_ms);
+    const added = formatDate(t.added_at);
+    const explicitBadge = t.explicit ? '<span class="explicit-badge">E</span>' : '';
+    const popBar = `<span class="pop-bar"><span style="width:${t.popularity}%"></span></span>${t.popularity}`;
+    const img = t.image
+      ? `<img class="lib-thumb" src="${t.image}" alt="" loading="lazy" />`
+      : `<div class="lib-thumb"></div>`;
+    return `
+      <tr>
+        <td class="lib-td lib-td-title">
+          <div class="lib-title-cell">${img}<div class="track-info"><div class="track-name">${escapeHtml(t.name)}</div></div></div>
+        </td>
+        <td class="lib-td">${escapeHtml(t.artists)}</td>
+        <td class="lib-td">${escapeHtml(t.album)}</td>
+        <td class="lib-td lib-td-num">${t.year}</td>
+        <td class="lib-td lib-td-num">${dur}</td>
+        <td class="lib-td lib-td-pop">${popBar}</td>
+        <td class="lib-td lib-td-center">${explicitBadge}</td>
+        <td class="lib-td lib-td-num">${added}</td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="lib-table-wrap">
+      <table class="lib-table">
+        <thead><tr>${headerCells}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+  container.querySelectorAll('.lib-th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const f = th.dataset.field;
+      if (state.librarySort.field === f) {
+        state.librarySort.dir = state.librarySort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.librarySort.field = f;
+        state.librarySort.dir = 'asc';
+      }
+      sortLibrary();
+      renderLibrary();
+    });
+  });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function loadLibrary(refresh = false) {
+  document.getElementById('library-container').innerHTML = '<div class="loader">Caricamento libreria…</div>';
+  document.getElementById('library-count').textContent = '';
+
+  try {
+    const params = refresh ? { refresh: true } : {};
+    const data = await apiGet('/api/library', params);
+    if (!data) return;
+    state.library = data.items || [];
+    state.libraryLoaded = true;
+    applyLibraryFilter();
+    renderLibrary();
+  } catch (err) {
+    document.getElementById('library-container').innerHTML =
+      `<div class="empty-state"><h3>Errore</h3><p>${err.message}</p></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  Stats
+// ═══════════════════════════════════════════════════
+
+function renderRecentTracks() {
+  const container = document.getElementById('recent-tracks-container');
+  const items = state.recentlyPlayed;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="empty-state"><h3>Nessun ascolto recente</h3></div>';
+    return;
+  }
+
+  const rows = items.map(item => `
+    <div class="recent-row">
+      ${item.image
+        ? `<img class="track-img" src="${item.image}" alt="" loading="lazy" />`
+        : `<div class="track-img"></div>`}
+      <div class="track-info">
+        <div class="track-name">${escapeHtml(item.name)}</div>
+        <div class="track-artist">${escapeHtml(item.artists)}</div>
+      </div>
+      <span class="recent-time">${formatDatetime(item.played_at)}</span>
+    </div>`).join('');
+
+  container.innerHTML = `<div class="recent-list">${rows}</div>`;
+}
+
+function renderFreqChart() {
+  const items = state.recentlyPlayed;
+  const canvas = document.getElementById('freq-chart');
+  const emptyEl = document.getElementById('chart-empty');
+
+  // Count frequency
+  const freq = {};
+  const names = {};
+  items.forEach(item => {
+    freq[item.uri] = (freq[item.uri] || 0) + 1;
+    names[item.uri] = item.name;
+  });
+
+  const sorted = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  if (!sorted.length) {
+    canvas.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+
+  canvas.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  const labels = sorted.map(([uri]) => {
+    const name = names[uri];
+    return name.length > 30 ? name.slice(0, 28) + '…' : name;
+  });
+  const values = sorted.map(([, count]) => count);
+
+  if (state.freqChart) {
+    state.freqChart.destroy();
+    state.freqChart = null;
+  }
+
+  state.freqChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Ascolti',
+        data: values,
+        backgroundColor: 'rgba(29,185,84,0.7)',
+        borderColor: '#1DB954',
+        borderWidth: 1,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.x} ascolto${ctx.parsed.x !== 1 ? 'i' : ''}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#A7A7A7', stepSize: 1 },
+          grid: { color: '#333' },
+          beginAtZero: true,
+        },
+        y: {
+          ticks: { color: '#fff', font: { size: 12 } },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
+async function loadStats(refresh = false) {
+  document.getElementById('recent-tracks-container').innerHTML = '<div class="loader">Caricamento…</div>';
+  if (state.freqChart) { state.freqChart.destroy(); state.freqChart = null; }
+
+  try {
+    const params = refresh ? { refresh: true } : {};
+    const data = await apiGet('/api/recently-played', params);
+    if (!data) return;
+    state.recentlyPlayed = data.items || [];
+    state.statsLoaded = true;
+    renderRecentTracks();
+    renderFreqChart();
+  } catch (err) {
+    document.getElementById('recent-tracks-container').innerHTML =
+      `<div class="empty-state"><h3>Errore</h3><p>${err.message}</p></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
 //  Modal helpers
 // ═══════════════════════════════════════════════════
 
@@ -343,7 +619,6 @@ function openModal(title = 'Aggiungi a playlist') {
 
 function closeModal() {
   document.getElementById('modal-backdrop').classList.add('hidden');
-  // Reset form
   document.getElementById('new-playlist-name').value = '';
   document.getElementById('new-playlist-desc').value = '';
   document.getElementById('new-playlist-public').checked = false;
@@ -359,7 +634,6 @@ function renderModalPlaylistList() {
   const container = document.getElementById('modal-playlist-list');
   const userId = state.user?.id;
 
-  // Only show playlists the user owns (can modify)
   const editable = state.playlists.filter(
     pl => pl.owner?.id === userId || pl.collaborative
   );
@@ -449,6 +723,9 @@ function switchTab(tabName) {
     sec.classList.toggle('active', sec.id === `tab-${tabName}`);
     sec.classList.toggle('hidden', sec.id !== `tab-${tabName}`);
   });
+
+  if (tabName === 'library' && !state.libraryLoaded) loadLibrary();
+  if (tabName === 'stats'   && !state.statsLoaded)   loadStats();
 }
 
 // ═══════════════════════════════════════════════════
@@ -456,7 +733,6 @@ function switchTab(tabName) {
 // ═══════════════════════════════════════════════════
 
 async function init() {
-  // Check auth status quickly without triggering a redirect
   const status = await fetch('/api/auth-status').then(r => r.json()).catch(() => ({ authenticated: false }));
 
   if (!status.authenticated) {
@@ -464,7 +740,6 @@ async function init() {
     return;
   }
 
-  // Load user profile
   try {
     state.user = await apiGet('/api/me');
   } catch {
@@ -481,7 +756,6 @@ function showLoginView() {
   document.getElementById('login-view').classList.remove('hidden');
   document.getElementById('app-view').classList.add('hidden');
 
-  // Show error if present in URL
   const params = new URLSearchParams(window.location.search);
   const error = params.get('error');
   if (error) {
@@ -563,14 +837,49 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal('Aggiungi a playlist');
   });
 
-  // ─── Playlists tab: new playlist button ────────
+  // ─── Playlists tab ─────────────────────────────
   document.getElementById('new-playlist-btn').addEventListener('click', () => {
     openModal('Crea nuova playlist');
     showModalStep('new');
   });
 
-  // ─── Playlist detail: back button ─────────────
   document.getElementById('back-btn').addEventListener('click', closePlaylistDetail);
+
+  // ─── Library tab ───────────────────────────────
+  const libFilter = document.getElementById('library-filter');
+  const clearLibFilter = document.getElementById('clear-library-filter');
+
+  libFilter.addEventListener('input', () => {
+    state.libraryFilter = libFilter.value;
+    clearLibFilter.classList.toggle('hidden', !libFilter.value);
+    if (state.libraryLoaded) {
+      applyLibraryFilter();
+      renderLibrary();
+    }
+  });
+
+  clearLibFilter.addEventListener('click', () => {
+    libFilter.value = '';
+    state.libraryFilter = '';
+    clearLibFilter.classList.add('hidden');
+    if (state.libraryLoaded) {
+      applyLibraryFilter();
+      renderLibrary();
+    }
+  });
+
+  document.getElementById('library-refresh-btn').addEventListener('click', () => {
+    loadLibrary(true);
+  });
+
+  document.getElementById('library-export-btn').addEventListener('click', () => {
+    window.location.href = '/api/library/export.csv';
+  });
+
+  // ─── Stats tab ─────────────────────────────────
+  document.getElementById('stats-refresh-btn').addEventListener('click', () => {
+    loadStats(true);
+  });
 
   // ─── Modal ─────────────────────────────────────
   document.getElementById('modal-close').addEventListener('click', closeModal);
