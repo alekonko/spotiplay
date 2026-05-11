@@ -4,9 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SpotiPlay</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+
+<!-- ═══════════════════════ LOADING OVERLAY ══════════════════ -->
+<div id="loading-overlay" class="loading-overlay hidden">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div id="loading-message" class="loading-message">Caricamento…</div>
+  </div>
+</div>
 
 <!-- ═══════════════════════ LOGIN VIEW ═══════════════════════ -->
 <div id="login-view" class="hidden">
@@ -33,12 +42,12 @@
 
   <!-- Header -->
   <header class="app-header">
-    <div class="header-brand">
+    <button class="header-brand" id="brand-home" aria-label="Home">
       <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
         <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.371-.721.49-1.101.241-3.021-1.858-6.832-2.278-11.322-1.237-.422.1-.851-.16-.954-.582-.1-.422.16-.851.582-.954 4.91-1.121 9.122-.641 12.512 1.43.38.24.49.721.241 1.101zm1.472-3.27c-.301.461-.921.601-1.381.301-3.461-2.131-8.732-2.75-12.823-1.5-.521.16-1.071-.13-1.231-.651-.16-.521.131-1.071.651-1.231 4.672-1.42 10.483-.731 14.484 1.71.461.301.601.921.301 1.381zm.129-3.4c-4.15-2.461-11.003-2.689-14.963-1.488-.641.189-1.31-.171-1.5-.81-.189-.641.171-1.31.81-1.5 4.553-1.38 12.123-1.112 16.9 1.721.58.341.771 1.091.43 1.671-.34.58-1.091.771-1.671.43z"/>
       </svg>
       <span>SpotiPlay</span>
-    </div>
+    </button>
     <div class="header-user">
       <img id="user-avatar" src="" alt="" class="avatar hidden" />
       <span id="user-name"></span>
@@ -89,13 +98,26 @@
         </div>
       </div>
       <div class="control-group">
-        <label class="control-label" for="artist-filter">Filtra per artista</label>
-        <div class="search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="artist-filter" placeholder="Nome artista…" autocomplete="off" />
-          <button id="clear-filter" class="clear-btn hidden" title="Rimuovi filtro">✕</button>
+        <label class="control-label" for="artist-filter">Artista</label>
+        <select id="artist-filter" class="filter-select">
+          <option value="">Tutti gli artisti</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="genre-filter">Genere</label>
+        <select id="genre-filter" class="filter-select">
+          <option value="">Tutti i generi</option>
+        </select>
+      </div>
+      <div class="control-group" style="margin-left:auto">
+        <label class="control-label">Vista</label>
+        <div class="btn-group">
+          <button class="btn btn-ghost btn-sm view-btn" data-view="list" title="Vista lista">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><rect x="1" y="2" width="14" height="2" rx="1"/><rect x="1" y="7" width="14" height="2" rx="1"/><rect x="1" y="12" width="14" height="2" rx="1"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-sm view-btn active" data-view="grid" title="Vista griglia">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -123,7 +145,10 @@
   <section id="tab-playlists" class="tab-content hidden">
     <div class="playlists-header">
       <h2>Le mie Playlist</h2>
-      <button id="new-playlist-btn" class="btn btn-primary btn-sm">+ Nuova playlist</button>
+      <div style="display:flex;gap:8px">
+        <button id="playlists-refresh-btn" class="btn btn-ghost btn-sm" title="Aggiorna">↻ Aggiorna</button>
+        <button id="new-playlist-btn" class="btn btn-primary btn-sm">+ Nuova playlist</button>
+      </div>
     </div>
     <div id="playlists-container">
       <div class="loader">Caricamento playlist…</div>
@@ -139,6 +164,24 @@
             <p id="detail-count" class="text-muted"></p>
           </div>
         </div>
+        <div class="detail-edit-toggle">
+          <label class="toggle-label" for="playlist-edit-toggle">
+            <span>Modifica</span>
+            <div class="toggle-track">
+              <input type="checkbox" id="playlist-edit-toggle" class="toggle-input" />
+              <span class="toggle-thumb"></span>
+            </div>
+          </label>
+        </div>
+      </div>
+      <!-- Edit mode action bar -->
+      <div id="detail-edit-bar" class="selection-bar hidden">
+        <div class="selection-info"><span id="detail-selected-count">0</span> brani selezionati</div>
+        <div class="selection-actions">
+          <button id="detail-select-all-btn" class="btn btn-ghost btn-sm">Seleziona tutti</button>
+          <button id="detail-clear-sel-btn"  class="btn btn-ghost btn-sm">Deseleziona</button>
+          <button id="detail-remove-btn" class="btn btn-danger btn-sm" disabled>✕ Rimuovi selezionati</button>
+        </div>
       </div>
       <div id="detail-tracks-container">
         <div class="loader">Caricamento brani…</div>
@@ -148,9 +191,18 @@
 
   <!-- ─── Tab: Library ─── -->
   <section id="tab-library" class="tab-content hidden">
+    <div class="controls-bar" style="margin-bottom:8px">
+      <div class="control-group">
+        <label class="control-label">Sorgente</label>
+        <div class="btn-group">
+          <button class="btn btn-ghost btn-sm lib-source-btn active" data-source="saved">Libreria salvata</button>
+          <button class="btn btn-ghost btn-sm lib-source-btn" data-source="top">Brani più ascoltati</button>
+        </div>
+      </div>
+    </div>
     <div class="controls-bar">
       <div class="control-group">
-        <label class="control-label" for="library-filter">Cerca nella libreria</label>
+        <label class="control-label" for="library-filter">Cerca</label>
         <div class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -159,11 +211,57 @@
           <button id="clear-library-filter" class="clear-btn hidden" title="Rimuovi filtro">✕</button>
         </div>
       </div>
+      <div class="control-group">
+        <label class="control-label" for="library-artist-filter">Artista</label>
+        <select id="library-artist-filter" class="filter-select">
+          <option value="">Tutti gli artisti</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="library-decade-filter">Decade</label>
+        <select id="library-decade-filter" class="filter-select">
+          <option value="">Tutte</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="library-explicit-filter">Contenuto</label>
+        <select id="library-explicit-filter" class="filter-select">
+          <option value="">Tutti</option>
+          <option value="explicit">Solo espliciti</option>
+          <option value="clean">Solo puliti</option>
+        </select>
+      </div>
+      <div class="control-group lib-pop-group">
+        <label class="control-label" for="library-pop-filter">Pop. min <span id="library-pop-value" class="filter-value">0</span></label>
+        <input type="range" id="library-pop-filter" min="0" max="100" value="0" class="pop-slider" />
+      </div>
+      <div class="control-group lib-dur-group">
+        <label class="control-label">Durata (min)</label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="number" id="library-dur-min" min="0" max="60" placeholder="min" class="dur-input" />
+          <span style="color:var(--text-muted)">–</span>
+          <input type="number" id="library-dur-max" min="0" max="60" placeholder="max" class="dur-input" />
+        </div>
+      </div>
       <div class="control-group" style="margin-left:auto;flex-direction:row;align-items:flex-end;gap:8px">
+        <button id="library-reset-filters-btn" class="btn btn-ghost btn-sm" title="Azzera tutti i filtri">✕ Filtri</button>
         <button id="library-refresh-btn" class="btn btn-ghost btn-sm" title="Forza aggiornamento cache">↻ Aggiorna</button>
         <button id="library-export-btn" class="btn btn-primary btn-sm">↓ Esporta CSV</button>
       </div>
     </div>
+
+    <!-- Library selection bar -->
+    <div id="library-selection-bar" class="selection-bar hidden">
+      <div class="selection-info">
+        <span id="library-selected-count">0</span> brani selezionati
+      </div>
+      <div class="selection-actions">
+        <button id="lib-select-visible-btn" class="btn btn-ghost btn-sm">Seleziona visibili</button>
+        <button id="lib-clear-selection-btn" class="btn btn-ghost btn-sm">Deseleziona tutti</button>
+        <button id="lib-add-to-playlist-btn" class="btn btn-primary btn-sm">+ Aggiungi a playlist</button>
+      </div>
+    </div>
+
     <div id="library-count" class="text-muted" style="margin-bottom:12px"></div>
     <div id="library-container">
       <div class="loader">Caricamento libreria…</div>
@@ -175,6 +273,10 @@
     <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
       <button id="stats-refresh-btn" class="btn btn-ghost btn-sm" title="Forza aggiornamento cache">↻ Aggiorna</button>
     </div>
+
+    <!-- Summary metrics -->
+    <div id="stats-summary" class="stats-summary hidden"></div>
+
     <div class="stats-grid">
       <div class="stats-card">
         <h3 class="stats-card-title">Ascolti recenti <span class="stats-subtitle">(ultimi 50, limite Spotify)</span></h3>
@@ -183,11 +285,25 @@
         </div>
       </div>
       <div class="stats-card">
-        <h3 class="stats-card-title">Brani più frequenti (ultima settimana)</h3>
+        <h3 class="stats-card-title">Brani più frequenti</h3>
         <div class="chart-wrap">
           <canvas id="freq-chart"></canvas>
         </div>
         <p id="chart-empty" class="text-muted" style="display:none;text-align:center;padding:24px 0">Nessun dato disponibile</p>
+      </div>
+      <div class="stats-card">
+        <h3 class="stats-card-title">Orario ascolti <span class="stats-subtitle">(da ascolti recenti)</span></h3>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="hourly-chart"></canvas>
+        </div>
+        <p id="hourly-empty" class="text-muted" style="display:none;text-align:center;padding:24px 0">Nessun dato disponibile</p>
+      </div>
+      <div class="stats-card">
+        <h3 class="stats-card-title">Top artisti <span class="stats-subtitle">(da brani più ascoltati)</span></h3>
+        <div class="chart-wrap" style="height:240px">
+          <canvas id="artists-chart"></canvas>
+        </div>
+        <p id="artists-empty" class="text-muted" style="display:none;text-align:center;padding:24px 0">Nessun dato disponibile</p>
       </div>
     </div>
   </section>
@@ -249,6 +365,12 @@
 
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════════ QUICK-ADD DROPDOWN ═══════════════ -->
+<div id="quick-add-dropdown" class="quick-add-dropdown hidden">
+  <div class="quick-add-header">Aggiungi a playlist</div>
+  <div id="quick-add-list"></div>
 </div>
 
 <!-- ═══════════════════════ TOAST ════════════════════════════ -->
