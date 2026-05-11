@@ -320,7 +320,7 @@ async def create_playlist(request: Request):
         print(f"[create_playlist] adding {len(uris)} tracks to {playlist['id']}, sample uri: {uris[0]!r}")
         await asyncio.sleep(1)
         for i in range(0, len(uris), 100):
-            await spotify_post(token, f"/playlists/{playlist['id']}/tracks", {"uris": uris[i:i+100]})
+            await spotify_post(token, f"/playlists/{playlist['id']}/items", {"uris": uris[i:i+100]})
 
     cache_bust(request, "playlists")
     return playlist
@@ -337,7 +337,7 @@ async def add_tracks_to_playlist(request: Request, playlist_id: str):
 
     results = []
     for i in range(0, len(uris), 100):
-        result = await spotify_post(token, f"/playlists/{playlist_id}/tracks", {"uris": uris[i:i+100]})
+        result = await spotify_post(token, f"/playlists/{playlist_id}/items", {"uris": uris[i:i+100]})
         results.append(result)
 
     cache_bust(request, "playlists")
@@ -348,7 +348,7 @@ async def add_tracks_to_playlist(request: Request, playlist_id: str):
 async def get_playlist_tracks(request: Request, playlist_id: str):
     token = await get_valid_token(request)
     all_items = []
-    url = f"/playlists/{playlist_id}/tracks"
+    url = f"/playlists/{playlist_id}/items"
     params = {"limit": 50, "offset": 0}
 
     while True:
@@ -371,7 +371,7 @@ async def remove_tracks_from_playlist(request: Request, playlist_id: str):
         raise HTTPException(400, "No track URIs provided")
 
     tracks = [{"uri": uri} for uri in uris]
-    result = await spotify_delete(token, f"/playlists/{playlist_id}/tracks", {"tracks": tracks})
+    result = await spotify_delete(token, f"/playlists/{playlist_id}/items", {"tracks": tracks})
     cache_bust(request, "playlists")
     return result
 
