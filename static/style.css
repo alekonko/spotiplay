@@ -313,7 +313,7 @@ body {
 
 .track-row {
   display: grid;
-  grid-template-columns: 32px 40px 1fr auto;
+  grid-template-columns: 24px 36px 52px 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
@@ -467,7 +467,7 @@ body {
 
 .detail-track-row {
   display: grid;
-  grid-template-columns: 32px 40px 1fr auto auto;
+  grid-template-columns: 24px 52px 1fr auto auto;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
@@ -887,3 +887,441 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+
+/* ─── Filter select ───────────────────────────────── */
+
+.filter-select {
+  background: var(--surface2);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 28px 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A7A7A7' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  max-width: 200px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+/* ─── Library checkbox & actions columns ──────────── */
+
+.lib-th-check, .lib-td-check { width: 36px; text-align: center; padding: 0 4px; }
+.lib-th-actions, .lib-td-actions { width: 36px; text-align: center; padding: 0 4px; }
+
+.lib-row-selected { background: rgba(29,185,84,0.08); }
+.lib-row-selected:hover { background: rgba(29,185,84,0.14); }
+
+.lib-row-check { cursor: pointer; accent-color: var(--green); width: 15px; height: 15px; }
+
+/* ─── Quick-add button per row ─────────────────────── */
+
+.quick-add-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.quick-add-btn:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+}
+
+/* ─── Quick-add dropdown ──────────────────────────── */
+
+.quick-add-dropdown {
+  position: absolute;
+  z-index: 200;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 230px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.quick-add-header {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.quick-add-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.quick-add-item:hover { background: var(--surface3, #3a3a3a); }
+
+.quick-add-item img,
+.quick-add-item-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.quick-add-empty {
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ─── Loading overlay ─────────────────────────────── */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.loading-overlay.hidden { display: none; }
+
+.loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 48px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-message {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ─── Stats summary chips ─────────────────────────── */
+
+.stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 100px;
+  flex: 1;
+}
+
+.stat-chip-val {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+
+.stat-chip-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* ─── Header brand as button ──────────────────────── */
+
+.header-brand {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s;
+}
+
+.header-brand:hover { color: var(--green); }
+
+/* ─── Track list extra details ────────────────────── */
+
+.track-album-line {
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 80px;
+}
+
+/* ─── Tracks grid view ────────────────────────────── */
+
+.tracks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.track-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  user-select: none;
+}
+
+.track-card:hover { border-color: var(--text-muted); transform: translateY(-2px); }
+.track-card.selected { border-color: var(--green); background: rgba(29,185,84,0.08); }
+
+.track-card-img-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--surface2);
+  overflow: hidden;
+}
+
+.track-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.track-card-img-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; color: var(--text-subtle);
+}
+
+.track-card-rank {
+  position: absolute;
+  top: 6px; left: 6px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.track-card-check {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 18px; height: 18px;
+  accent-color: var(--green);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.track-card:hover .track-card-check,
+.track-card.selected .track-card-check { opacity: 1; }
+
+.track-card-info {
+  padding: 10px;
+}
+
+.track-card-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.track-card-artist {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+
+.track-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+}
+
+/* ─── Playlist edit toggle ────────────────────────── */
+
+.detail-edit-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.toggle-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-track:has(.toggle-input:checked) { background: var(--green); }
+
+.toggle-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.toggle-thumb {
+  pointer-events: none;
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.toggle-input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+}
+
+.btn-danger:hover:not(:disabled) { background: #e74c3c; }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── Library extra filters ───────────────────────── */
+
+.pop-slider {
+  width: 100px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.filter-value {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 24px;
+}
+
+.dur-input {
+  width: 52px;
+  background: var(--surface2);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 0.82rem;
+}
+
+.dur-input:focus { outline: none; border-color: var(--green); }
+
+/* ─── Track list (improved) ───────────────────────── */
+
+.track-img-lg {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.track-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pop-num {
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+  min-width: 20px;
+  text-align: right;
+}
+
+.track-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 90px;
+}
